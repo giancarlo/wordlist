@@ -1,0 +1,14 @@
+<script src="amd.js"></script>
+<script src="index.bundle.min.js"></script>
+
+<cxl-meta></cxl-meta>
+<cxl-page> </cxl-page>
+
+<script type="module">
+	async function load() {
+		const data = await fetch("es-common.txt").then((r) => r.text());
+		console.log(data);
+	}
+
+	load();
+</script>
