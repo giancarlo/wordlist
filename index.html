@@ -23,6 +23,9 @@
 		overflow-y: hidden;
 		white-space: nowrap;
 	}
+	#firstWords {
+		justify-content: space-between;
+	}
 	#columns > cxl-flex {
 		flex-wrap: wrap;
 		flex-shrink: 0;
@@ -31,10 +34,10 @@
 <cxl-meta></cxl-meta>
 <cxl-flex vflex fill style="overflow: hidden">
 	<cxl-flex pad="8" gap="8" middle>
-		<!--cxl-button id="btnReset" size="3"
-			><cxl-icon name="clear"></cxl-icon
-		></cxl-button-->
 		<cxl-flex style="overflow-x: auto" grow id="output" pad="8"></cxl-flex>
+		<cxl-button id="btnReset" size="3"
+			><cxl-icon width="36" name="clear"></cxl-icon
+		></cxl-button>
 		<!--cxl-button id="btnNext" size="3" color="success">NEXT</cxl-button-->
 	</cxl-flex>
 	<cxl-flex
@@ -75,6 +78,7 @@
 	let selected1;
 
 	//btnNext.onclick = next;
+	btnReset.onclick = clear;
 
 	updateOutput();
 
