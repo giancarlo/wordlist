@@ -1,12 +1,14 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
 <script src="index.bundle.min.js"></script>
 <title>Words</title>
 <style>
 	.selected {
-		opacity: 0.6;
+		opacity: 0.5;
 	}
 	.selected cxl-button {
-		padding-left: 0px;
-		padding-right: 0px;
+		/*padding-left: 0px;
+		padding-right: 0px;*/
 	}
 	cxl-button {
 		justify-content: center;
@@ -15,91 +17,146 @@
 	#output {
 		height: 56px;
 		font-size: 38px;
-		flex-shrink: 0;
 		background: #eee;
 		align-items: center;
 		overflow-x: auto;
 		overflow-y: hidden;
 		white-space: nowrap;
 	}
+	#columns > cxl-flex {
+		flex-wrap: wrap;
+		flex-shrink: 0;
+	}
 </style>
 <cxl-meta></cxl-meta>
 <cxl-flex vflex fill style="overflow: hidden">
-	<cxl-flex pad="8" gap="8">
-		<cxl-button
-			onclick="output.innerText += ' YES'"
-			size="3"
-			color="success"
-			>YES</cxl-button
-		>
-		<cxl-button
-			id="btnReset"
-			style="margin-left: auto; margin-right: auto"
-			size="3"
-			>RESET</cxl-button
-		>
-		<cxl-button onclick="output.innerText += ' NO'" size="3" color="error"
-			>NO</cxl-button
-		>
+	<cxl-flex pad="8" gap="8" middle>
+		<!--cxl-button id="btnReset" size="3"
+			><cxl-icon name="clear"></cxl-icon
+		></cxl-button-->
+		<cxl-flex style="overflow-x: auto" grow id="output" pad="8"></cxl-flex>
+		<cxl-button id="btnNext" size="3" color="success">NEXT</cxl-button>
 	</cxl-flex>
-	<cxl-flex id="output" pad="8"></cxl-flex>
 	<cxl-flex
-		style="overflow-y: hidden; overflow-x: auto"
-		id="columns"
-		grow
-		gap="16"
-		pad="8"
-		vpad="4"
+		style="
+			position: relative;
+			height: 40%;
+			flex-shrink: 0;
+			overflow: auto hidden;
+		"
 	>
-		<cxl-flex vflex gap="8"></cxl-flex>
-		<cxl-flex vflex gap="8"></cxl-flex>
-		<cxl-flex vflex gap="8"></cxl-flex>
-		<cxl-flex vflex gap="8"></cxl-flex>
-		<cxl-flex vflex gap="8"></cxl-flex>
-		<cxl-flex
-			style="flex-wrap: wrap"
-			vflex
-			gap="16"
-			id="firstWords"
-		></cxl-flex>
+		<cxl-flex id="columns" gap="16" pad="8" vpad="0">
+			<cxl-flex vflex gap="8"></cxl-flex>
+			<cxl-flex vflex gap="8"></cxl-flex>
+			<cxl-flex vflex gap="8"></cxl-flex>
+			<cxl-flex vflex gap="8"></cxl-flex>
+			<cxl-flex vflex gap="8"></cxl-flex>
+		</cxl-flex>
 	</cxl-flex>
+	<cxl-flex
+		grow
+		pad="8"
+		style="flex-wrap: wrap; overflow-y: auto"
+		gap="8"
+		id="firstWords"
+	></cxl-flex>
 </cxl-flex>
 
 <script type="module">
 	const { dom } = require("@cxl/tsx");
 	const { empty } = require("@cxl/dom");
-	const columns = document.getElementById("columns").children;
+	const columnsEl = document.getElementById("columns");
+	const columns = columnsEl.children;
 	const firstWords = document.getElementById("firstWords");
 	const maxMatch = 22;
+	const bowelRegex = new RegExp("[áíéúó]");
+	const history = getHistory();
 
-	btnReset.onclick = () => {
+	let selectedWord;
+	let selected1;
+
+	function getHistory() {
+		try {
+			return JSON.parse(localStorage.getItem("wordsHistory") || "[]");
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function replaceBowels(str) {
+		return str.replace(bowelRegex, (m) => {
+			return "aeiou".charAt("áéíóú".indexOf(m));
+		});
+	}
+
+	function getBowel(m) {
+		const i = "aeiou".indexOf(m);
+		return `${m}${"áéíóú".charAt(i)}`;
+	}
+
+	function getRegex(str) {
+		return str.replace(/[aeiou]/i, (m) => {
+			const i = "aeiou".indexOf(m);
+			return `[${m}${"áéíóú".charAt(i)}]`;
+		});
+	}
+
+	function next() {
 		for (let i = 1; i < columns.length; i++) {
 			columns[i].className = "";
+			columns[i].style.width = "";
 			empty(columns[i]);
 		}
-		output.innerText = "";
 		columns[0].className = "";
+		columnsEl.style.minWidth = "";
+		empty(firstWords);
+		showHistory();
 		const selected = columns[0].querySelector('[color="primary"]');
 		if (selected) selected.color = undefined;
+	}
+
+	//btnNext.onclick = next;
+	btnNext.onclick = () => {
+		const word = output.innerText;
+		if (word.length && !history.includes(word)) {
+			history.unshift(word);
+			localStorage.setItem(
+				"wordsHistory",
+				JSON.stringify(history.slice(0, maxMatch))
+			);
+		}
+
+		output.innerText = "";
+		next();
 	};
+
+	function appendWord(text) {
+		const btn = dom("cxl-button", { size: 5 });
+		btn.innerText = text;
+		btn.onclick = () => {
+			if (btn.color === "primary") {
+				btn.color = undefined;
+				output.innerText = "";
+			} else {
+				if (selectedWord) selectedWord.color = undefined;
+				btn.color = "primary";
+				selectedWord = btn;
+				output.innerText = ` ${btn.innerText}`;
+			}
+		};
+		firstWords.appendChild(btn);
+	}
 
 	function updateWords(words, regstr, level) {
 		empty(firstWords);
-		const regex = new RegExp(`^${regstr}.+`, "gim");
+		const regex = new RegExp(`^${regstr}.*`, "gim");
 		const level2 = {};
 		let m,
 			count = maxMatch;
 		let selected2;
 		while ((m = regex.exec(words))) {
-			if (count-- > 0) {
-				const btn = dom("cxl-button", { size: 5 });
-				btn.innerText = m[0];
-				btn.onclick = () => {
-					output.innerText += ` ${btn.innerText}`;
-				};
-				firstWords.appendChild(btn);
-			}
-			const key = m[0].slice(0, level + 2);
+			if (count-- > 0) appendWord(m[0]);
+			const key = replaceBowels(m[0].slice(0, level + 2));
 			level2[key] = (level2[key] ?? 0) + 1;
 		}
 		for (let i = level + 1; i < columns.length - 1; i++) {
@@ -107,9 +164,12 @@
 			empty(columns[i]);
 		}
 
-		if (count <= 0 && level <= 5)
+		const col = columns[level + 1];
+		col.style.width = `0`;
+		if (count <= 0 && level <= 5) {
 			Object.entries(level2)
 				.sort((a, b) => (a[1] > b[1] ? -1 : 1))
+				//.sort((a, b) => (a[0] > b[0] ? 1 : -1))
 				.forEach(([key]) => {
 					const btn = dom("cxl-button", { size: 4 });
 					btn.innerText = key;
@@ -117,39 +177,68 @@
 						if (selected2) selected2.color = undefined;
 						btn.color = "primary";
 						selected2 = btn;
-						columns[level + 1].className = "selected";
-						updateWords(words, key, level + 1);
+						col.className = "selected";
+						updateWords(
+							words,
+							key.length > 1 ? getRegex(key) : `^${key}$`,
+							level + 1
+						);
 					};
-					columns[level + 1].appendChild(btn);
+					col.appendChild(btn);
 				});
+			col.style.width = `${col.scrollWidth}px`;
+
+			requestAnimationFrame(() => {
+				columnsEl.parentElement.scrollTo({
+					left: 5000,
+					behavior: "smooth",
+				});
+			});
+		}
+	}
+
+	function createStartLettersButton(start, end, data) {
+		const btn = dom("cxl-button", { size: 4 });
+		const count = end.charCodeAt(0) - start.charCodeAt(0);
+		let label = start;
+		let regstr = getBowel(start);
+		for (let i = 1; i <= count; i++) {
+			const letter = String.fromCharCode(start.charCodeAt(0) + i);
+			label += `-${letter}`;
+			regstr += getBowel(letter);
+		}
+		regstr = `[${regstr}]`;
+
+		btn.onclick = () => {
+			if (selected1) selected1.color = undefined;
+			btn.color = "primary";
+			selected1 = btn;
+			columns[0].className = "selected";
+			updateWords(data, regstr, 0);
+		};
+		btn.innerText = label;
+		columns[0].appendChild(btn);
+	}
+
+	function showHistory() {
+		for (const term of history) appendWord(term);
 	}
 
 	async function load() {
 		const data = await fetch("es-common.txt").then((r) => r.text());
 		const count = 1;
-		let start = "A";
-		let selected1;
+		let start = "a";
 
 		do {
-			const btn = dom("cxl-button", { size: 4 });
 			let end = String.fromCharCode(start.charCodeAt(0) + count);
-			if (end > "Z") end = "Z";
-			const regstr = `[${start}-${end}]`;
-			let label = start;
-			for (let i = 1; i <= count; i++)
-				label += `-${String.fromCharCode(start.charCodeAt(0) + i)}`;
-
-			btn.onclick = () => {
-				if (selected1) selected1.color = undefined;
-				btn.color = "primary";
-				selected1 = btn;
-				columns[0].className = "selected";
-				updateWords(data, regstr, 0);
-			};
-			btn.innerText = label; ///`${start}-${end}`;
+			if (end > "v") end = "v";
+			createStartLettersButton(start, end, data);
 			start = String.fromCharCode(start.charCodeAt(0) + count + 1);
-			columns[0].appendChild(btn);
-		} while (start < "Z");
+		} while (start < "v");
+
+		createStartLettersButton("w", "z", data);
+		columns[0].style.width = `${columns[0].scrollWidth}px`;
+		showHistory();
 	}
 
 	load();

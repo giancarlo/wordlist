@@ -13,7 +13,7 @@ const { writeFile } = require("fs/promises");
 // Dataset from https://en.wiktionary.org/wiki/Wiktionary:Frequency_lists#Spanish
 
 //const json = require("./dataset.json");
-const data = readFileSync("es-corpus-5000.txt", "utf8");
+const data = readFileSync("es-corpus-10000.txt", "utf8");
 const result = [];
 const regex = /^\s+\d+\.\s+([a-zñáíéúó]+)/gm;
 
