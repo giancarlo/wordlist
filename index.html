@@ -35,7 +35,7 @@
 			><cxl-icon name="clear"></cxl-icon
 		></cxl-button-->
 		<cxl-flex style="overflow-x: auto" grow id="output" pad="8"></cxl-flex>
-		<cxl-button id="btnNext" size="3" color="success">NEXT</cxl-button>
+		<!--cxl-button id="btnNext" size="3" color="success">NEXT</cxl-button-->
 	</cxl-flex>
 	<cxl-flex
 		style="
@@ -74,6 +74,8 @@
 	let selectedWord;
 	let selected1;
 
+	//btnNext.onclick = next;
+
 	updateOutput();
 
 	function getHistory() {
@@ -102,7 +104,7 @@
 		});
 	}
 
-	function next() {
+	function clear() {
 		for (let i = 1; i < columns.length; i++) {
 			columns[i].className = "";
 			columns[i].style.width = "";
@@ -116,24 +118,23 @@
 		if (selected) selected.color = undefined;
 	}
 
-	function updateOutput() {
-		output.innerText = history.reverse().join(" ");
+	function updateOutput(word = "") {
+		output.innerText = history.slice(0).reverse().join(" ") + ` ${word}`;
 		output.scrollLeft = 10000;
 	}
 
-	//btnNext.onclick = next;
-	btnNext.onclick = () => {
+	function next() {
 		const word = selectedWord?.innerText;
+		updateOutput(word);
 		if (word?.length && !history.includes(word)) {
 			history.unshift(word);
-			history = history.slice(0, maxMatch);
-			updateOutput();
+			if (history.length > maxMatch) history = history.slice(0, maxMatch);
 			localStorage.setItem("wordsHistory", JSON.stringify(history));
 		}
 		selectedWord = undefined;
 		//output.innerText = "";
-		next();
-	};
+		clear();
+	}
 
 	function appendWord(text) {
 		const btn = dom("cxl-button", { size: 5 });
@@ -144,9 +145,11 @@
 				selectedWord = undefined;
 				//output.innerText = "";
 			} else {
-				if (selectedWord) selectedWord.color = undefined;
+				//if (selectedWord) selectedWord.color = undefined;
 				btn.color = "primary";
 				selectedWord = btn;
+				setTimeout(next, 250);
+				//next();
 				//output.innerText = ` ${btn.innerText}`;
 			}
 		};
@@ -186,7 +189,7 @@
 						col.className = "selected";
 						updateWords(
 							words,
-							key.length > 1 ? getRegex(key) : `^${key}$`,
+							key.length > level + 1 ? getRegex(key) : `^${key}$`,
 							level + 1
 						);
 					};
