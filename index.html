@@ -70,10 +70,11 @@
 	const firstWords = document.getElementById("firstWords");
 	const maxMatch = 22;
 	const bowelRegex = new RegExp("[áíéúó]");
-	const history = getHistory();
-
+	let history = getHistory();
 	let selectedWord;
 	let selected1;
+
+	updateOutput();
 
 	function getHistory() {
 		try {
@@ -115,18 +116,22 @@
 		if (selected) selected.color = undefined;
 	}
 
+	function updateOutput() {
+		output.innerText = history.reverse().join(" ");
+		output.scrollLeft = 10000;
+	}
+
 	//btnNext.onclick = next;
 	btnNext.onclick = () => {
-		const word = output.innerText;
-		if (word.length && !history.includes(word)) {
+		const word = selectedWord?.innerText;
+		if (word?.length && !history.includes(word)) {
 			history.unshift(word);
-			localStorage.setItem(
-				"wordsHistory",
-				JSON.stringify(history.slice(0, maxMatch))
-			);
+			history = history.slice(0, maxMatch);
+			updateOutput();
+			localStorage.setItem("wordsHistory", JSON.stringify(history));
 		}
-
-		output.innerText = "";
+		selectedWord = undefined;
+		//output.innerText = "";
 		next();
 	};
 
@@ -136,12 +141,13 @@
 		btn.onclick = () => {
 			if (btn.color === "primary") {
 				btn.color = undefined;
-				output.innerText = "";
+				selectedWord = undefined;
+				//output.innerText = "";
 			} else {
 				if (selectedWord) selectedWord.color = undefined;
 				btn.color = "primary";
 				selectedWord = btn;
-				output.innerText = ` ${btn.innerText}`;
+				//output.innerText = ` ${btn.innerText}`;
 			}
 		};
 		firstWords.appendChild(btn);
@@ -168,8 +174,8 @@
 		col.style.width = `0`;
 		if (count <= 0 && level <= 5) {
 			Object.entries(level2)
-				.sort((a, b) => (a[1] > b[1] ? -1 : 1))
-				//.sort((a, b) => (a[0] > b[0] ? 1 : -1))
+				//.sort((a, b) => (a[1] > b[1] ? -1 : 1))
+				.sort((a, b) => (a[0] > b[0] ? 1 : -1))
 				.forEach(([key]) => {
 					const btn = dom("cxl-button", { size: 4 });
 					btn.innerText = key;
