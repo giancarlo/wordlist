@@ -122,7 +122,8 @@
 	}
 
 	function updateOutput(word = "") {
-		output.innerText = history.slice(0).reverse().join(" ") + ` ${word}`;
+		//output.innerText = history.slice(0).reverse().join(" ") + ` ${word}`;
+		output.innerText += ` ${word}`;
 		output.scrollLeft = 10000;
 	}
 
