@@ -6,10 +6,6 @@
 	.selected {
 		opacity: 0.5;
 	}
-	.selected cxl-button {
-		/*padding-left: 0px;
-		padding-right: 0px;*/
-	}
 	cxl-button {
 		justify-content: center;
 		transition: padding 0.2s;
@@ -78,7 +74,10 @@
 	let selected1;
 
 	//btnNext.onclick = next;
-	btnReset.onclick = clear;
+	btnReset.onclick = () => {
+		clear();
+		output.innerText = "";
+	};
 
 	updateOutput();
 
