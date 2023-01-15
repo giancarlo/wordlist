@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <meta charset="utf-8" />
+<meta
+	name="viewport"
+	content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+/>
 <script src="index.bundle.min.js"></script>
 <title>Words</title>
 <style>
+	body,
+	html {
+		margin: 0;
+		padding: 0;
+	}
 	.selected {
 		opacity: 0.5;
 	}
@@ -34,7 +43,6 @@
 		margin: 16px 0 16px 0;
 	}
 </style>
-<cxl-meta></cxl-meta>
 <cxl-flex vflex fill style="overflow: hidden">
 	<cxl-flex pad="8" gap="16" middle>
 		<cxl-flex style="overflow-x: auto" grow id="output" pad="8"></cxl-flex>
