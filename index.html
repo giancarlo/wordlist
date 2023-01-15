@@ -13,11 +13,12 @@
 	#output {
 		height: 56px;
 		font-size: 38px;
-		background: #eee;
+		border: 1px solid #ccc;
+		border-radius: 8px;
 		align-items: center;
 		overflow-x: auto;
 		overflow-y: hidden;
-		white-space: nowrap;
+		white-space: pre;
 	}
 	#firstWords {
 		justify-content: space-between;
@@ -26,17 +27,30 @@
 		flex-wrap: wrap;
 		flex-shrink: 0;
 	}
+	.keyboard-row {
+		display: flex;
+		column-gap: 16px;
+		justify-content: center;
+		margin: 16px 0 16px 0;
+	}
 </style>
 <cxl-meta></cxl-meta>
 <cxl-flex vflex fill style="overflow: hidden">
-	<cxl-flex pad="8" gap="8" middle>
+	<cxl-flex pad="8" gap="16" middle>
 		<cxl-flex style="overflow-x: auto" grow id="output" pad="8"></cxl-flex>
-		<cxl-button id="btnReset" size="3"
-			><cxl-icon width="36" name="clear"></cxl-icon
-		></cxl-button>
+		<cxl-icon-button id="btnReset" size="3"
+			><cxl-icon width="40" name="clear"></cxl-icon
+		></cxl-icon-button>
 		<!--cxl-button id="btnNext" size="3" color="success">NEXT</cxl-button-->
 	</cxl-flex>
 	<cxl-flex
+		grow
+		pad="8"
+		style="flex-wrap: wrap; overflow-y: auto"
+		gap="8"
+		id="firstWords"
+	></cxl-flex>
+	<!--cxl-flex
 		style="
 			position: relative;
 			height: 40%;
@@ -51,35 +65,31 @@
 			<cxl-flex vflex gap="8"></cxl-flex>
 			<cxl-flex vflex gap="8"></cxl-flex>
 		</cxl-flex>
-	</cxl-flex>
-	<cxl-flex
-		grow
-		pad="8"
-		style="flex-wrap: wrap; overflow-y: auto"
-		gap="8"
-		id="firstWords"
-	></cxl-flex>
+	</cxl-flex-->
+	<div style="flex-shrink: 0" id="keyboard"></div>
 </cxl-flex>
 
 <script type="module">
 	const { dom } = require("@cxl/tsx");
 	const { empty } = require("@cxl/dom");
 	const columnsEl = document.getElementById("columns");
-	const columns = columnsEl.children;
+	//const columns = columnsEl.children;
 	const firstWords = document.getElementById("firstWords");
-	const maxMatch = 22;
+	const maxMatch = 30;
 	const bowelRegex = new RegExp("[áíéúó]");
 	let history = getHistory();
-	let selectedWord;
 	let selected1;
+	let currentWord = "";
+	let startText = "";
 
 	//btnNext.onclick = next;
 	btnReset.onclick = () => {
 		clear();
 		output.innerText = "";
+		startText = "";
 	};
 
-	updateOutput();
+	//updateOutput();
 
 	function getHistory() {
 		try {
@@ -108,35 +118,35 @@
 	}
 
 	function clear() {
-		for (let i = 1; i < columns.length; i++) {
+		/*for (let i = 1; i < columns.length; i++) {
 			columns[i].className = "";
 			columns[i].style.width = "";
 			empty(columns[i]);
 		}
-		columns[0].className = "";
-		columnsEl.style.minWidth = "";
+		//columns[0].className = "";
+		//columnsEl.style.minWidth = "";*/
+		setKeyboardDisable(false);
+		currentWord = "";
 		empty(firstWords);
 		showHistory();
-		const selected = columns[0].querySelector('[color="primary"]');
-		if (selected) selected.color = undefined;
+		//const selected = columns[0].querySelector('[color="primary"]');
+		//if (selected) selected.color = undefined;
 	}
 
 	function updateOutput(word = "") {
-		//output.innerText = history.slice(0).reverse().join(" ") + ` ${word}`;
-		output.innerText += ` ${word}`;
+		output.innerText = startText = startText
+			? `${startText} ${word} `
+			: `${word} `;
 		output.scrollLeft = 10000;
 	}
 
-	function next() {
-		const word = selectedWord?.innerText;
+	function next(word) {
 		updateOutput(word);
 		if (word?.length && !history.includes(word)) {
 			history.unshift(word);
 			if (history.length > maxMatch) history = history.slice(0, maxMatch);
 			localStorage.setItem("wordsHistory", JSON.stringify(history));
 		}
-		selectedWord = undefined;
-		//output.innerText = "";
 		clear();
 	}
 
@@ -146,15 +156,9 @@
 		btn.onclick = () => {
 			if (btn.color === "primary") {
 				btn.color = undefined;
-				selectedWord = undefined;
-				//output.innerText = "";
 			} else {
-				//if (selectedWord) selectedWord.color = undefined;
 				btn.color = "primary";
-				selectedWord = btn;
-				setTimeout(next, 250);
-				//next();
-				//output.innerText = ` ${btn.innerText}`;
+				setTimeout(() => next(btn.innerText), 250);
 			}
 		};
 		firstWords.appendChild(btn);
@@ -169,10 +173,15 @@
 		let selected2;
 		while ((m = regex.exec(words))) {
 			if (count-- > 0) appendWord(m[0]);
-			const key = replaceBowels(m[0].slice(0, level + 2));
+			const key = replaceBowels(m[0].slice(0, level + 1)).charAt(level);
 			level2[key] = (level2[key] ?? 0) + 1;
 		}
-		for (let i = level + 1; i < columns.length - 1; i++) {
+		for (const key in level2) {
+			const btn =
+				key && document.getElementById(`letter-${key.toUpperCase()}`);
+			if (btn) btn.disabled = false;
+		}
+		/*for (let i = level + 1; i < columns.length - 1; i++) {
 			columns[i].className = "";
 			empty(columns[i]);
 		}
@@ -207,7 +216,7 @@
 					behavior: "smooth",
 				});
 			});
-		}
+		}*/
 	}
 
 	function createStartLettersButton(start, end, data) {
@@ -233,13 +242,66 @@
 		columns[0].appendChild(btn);
 	}
 
+	function setKeyboardDisable(val) {
+		for (const key of keyboard.querySelectorAll("cxl-button[id]"))
+			key.disabled = val;
+	}
+
+	function createButton(label, div, data) {
+		const btn = dom("cxl-button", { size: 5 });
+		btn.innerText = label;
+		btn.id = `letter-${label}`;
+		btn.onclick = () => {
+			output.innerText += label;
+			currentWord += label;
+			setKeyboardDisable(true);
+			updateWords(data, getRegex(currentWord), currentWord.length);
+		};
+		div.appendChild(btn);
+	}
+
 	function showHistory() {
 		for (const term of history) appendWord(term);
 	}
 
 	async function load() {
 		const data = await fetch("es-common.txt").then((r) => r.text());
-		const count = 1;
+		const keys = ["QWERTYUIOP", "ASDFGHJKLÑ", "ZXCVBNM"];
+		for (const row of keys) {
+			const div = dom("div");
+			div.className = "keyboard-row";
+			for (const ch of row) createButton(ch, div, data);
+			keyboard.appendChild(div);
+		}
+
+		const backspace = dom("cxl-button", {
+			size: 5,
+			innerHTML: '<cxl-icon width="32" name="arrow_back"></cxl-icon>',
+			color: "warning",
+		});
+		backspace.style.width = "150px";
+		backspace.onclick = () => {
+			currentWord = currentWord.slice(0, currentWord.length - 1);
+			output.innerText = startText + currentWord;
+			if (currentWord) updateWords(data, getRegex(currentWord), 1);
+			else clear();
+		};
+		keyboard.children[2].insertBefore(
+			backspace,
+			keyboard.children[2].children[0]
+		);
+
+		const nextBtn = dom("cxl-button", {
+			size: 5,
+			innerText: "NEXT",
+			color: "success",
+			onclick: () => next(currentWord),
+		});
+
+		keyboard.children[2].appendChild(nextBtn);
+
+		//for (let i = 0; i < keys.length; i++) createButton(row.charAt(i));
+		/*const count = 1;
 		let start = "a";
 
 		do {
@@ -250,7 +312,8 @@
 		} while (start < "v");
 
 		createStartLettersButton("w", "z", data);
-		columns[0].style.width = `${columns[0].scrollWidth}px`;
+		columns[0].style.width = `${columns[0].scrollWidth}px`;*/
+
 		showHistory();
 	}
 
